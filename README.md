@@ -2,6 +2,10 @@
 
 A modern, dynamic student evaluation and scoring platform with tactile interactions, real-time analytics, and SQLite persistence.
 
+## 🌐 Live Demo
+
+🚀 **Try the live application:** https://scoredude.vercel.app/
+
 ## Features
 - **Adaptive Evaluation Interface**: Rate candidates across dynamic customizable pillars (0-10 scale).
 - **Auto-Calculations**: Real-time percentage, weighted totals, and automatic letter grading (A+, A, B+, B, C, F).
