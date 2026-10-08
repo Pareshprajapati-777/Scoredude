@@ -1,5 +1,6 @@
 import React from 'react';
 import { getGradeBadgeInfo } from '../utils/sound';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 
 export default function DashboardModal({
   isOpen,
@@ -13,26 +14,31 @@ export default function DashboardModal({
   onOpenHistory,
   onViewScorecard
 }) {
+  const {
+    backdropProps,
+    modalContentProps
+  } = useSafeBackdropDismiss(onClose, isOpen);
+
   if (!isOpen) return null;
 
   return (
     <div
-      onClick={onClose}
-      className="fixed inset-0 z-30 flex justify-start pt-20 pb-4 px-3 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
+      {...backdropProps}
+      className="fixed inset-0 z-30 flex justify-start pt-16 sm:pt-20 pb-2 sm:pb-4 px-2 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
     >
       {/* Soft left crimson gradient backdrop so puppet character remains completely visible on the right */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#320107]/90 via-[#45020c]/50 to-transparent pointer-events-none" />
 
       <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-3xl p-5 sm:p-7 shadow-2xl text-white overflow-y-auto space-y-6"
+        {...modalContentProps}
+        className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl text-white overflow-y-auto space-y-5 sm:space-y-6"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/15">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/15 gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xl">📊</span>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white">
                 Scoredude Performance Hub
               </h2>
             </div>
@@ -41,7 +47,7 @@ export default function DashboardModal({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
             <button
               onClick={() => { onClose(); onOpenScore(); }}
               className="btn-pill btn-tactile px-4 py-2 rounded-full bg-white text-black font-bold text-xs hover:bg-rose-50 border border-white/30 transition-all cursor-pointer shadow-lg"
@@ -51,7 +57,7 @@ export default function DashboardModal({
             <button
               onClick={onClose}
               title="Close to home"
-              className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10"
+              className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10 shrink-0"
             >
               ✕
             </button>

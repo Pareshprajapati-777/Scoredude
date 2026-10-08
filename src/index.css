@@ -125,3 +125,21 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.45);
 }
+
+/* Mobile input optimization: prevent iOS auto-zoom on input focus */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth touch momentum scrolling on mobile */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Clean tap highlights on mobile devices */
+button, a, input, select {
+  -webkit-tap-highlight-color: transparent;
+}
+

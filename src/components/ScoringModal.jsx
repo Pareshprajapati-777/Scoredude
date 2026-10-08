@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { playSoundEffect, getGradeBadgeInfo } from '../utils/sound';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 
 export default function ScoringModal({
   isOpen,
@@ -25,6 +26,11 @@ export default function ScoringModal({
   const [newImprovement, setNewImprovement] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedSuccessRecord, setSavedSuccessRecord] = useState(null);
+
+  const {
+    backdropProps,
+    modalContentProps
+  } = useSafeBackdropDismiss(onClose, isOpen);
 
   useEffect(() => {
     if (preselectedStudent) {
@@ -185,24 +191,26 @@ export default function ScoringModal({
     setSavedSuccessRecord(null);
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
-      onClick={onClose}
-      className="fixed inset-0 z-30 flex justify-start pt-20 pb-4 px-3 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
+      {...backdropProps}
+      className="fixed inset-0 z-30 flex justify-start pt-16 sm:pt-20 pb-2 sm:pb-4 px-2 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
     >
       {/* Soft left crimson gradient backdrop so puppet character remains completely visible on the right */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#320107]/90 via-[#45020c]/50 to-transparent pointer-events-none" />
 
       <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-3xl p-5 sm:p-7 shadow-2xl text-white overflow-y-auto"
+        {...modalContentProps}
+        className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl text-white overflow-y-auto"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/15">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/15 gap-3">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none">⚡</span>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white">
                 Scoredude Evaluation Engine
               </h2>
               <p className="text-xs text-rose-200/70">
@@ -211,26 +219,26 @@ export default function ScoringModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
             {/* Live Auto-Total Display Pill */}
-            <div className="flex items-center gap-3 bg-white/10 border border-white/20 px-3.5 py-1.5 rounded-full">
+            <div className="flex items-center gap-2.5 sm:gap-3 bg-white/10 border border-white/20 px-3 sm:px-3.5 py-1.5 rounded-full">
               <div className="text-right">
                 <span className="text-[9px] uppercase tracking-wider text-rose-200/70 font-bold block">Auto Total</span>
-                <span className="text-sm sm:text-base font-black text-white">
-                  {totalScore} <span className="text-xs font-normal text-rose-200/60">/ {maxPossible}</span>
+                <span className="text-xs sm:text-base font-black text-white">
+                  {totalScore} <span className="text-[10px] sm:text-xs font-normal text-rose-200/60">/ {maxPossible}</span>
                 </span>
               </div>
               <div className="h-5 w-px bg-white/20" />
               <div className="text-center">
-                <span className="text-xs font-black text-emerald-400">{percentage}%</span>
-                <span className="block text-[9px] text-white font-bold">Grade {gradeInfo.grade}</span>
+                <span className="text-xs sm:text-sm font-black text-emerald-400">{percentage}%</span>
+                <span className="block text-[8px] sm:text-[9px] text-white font-bold">Grade {gradeInfo.grade}</span>
               </div>
             </div>
 
             <button
               onClick={onClose}
               title="Close to home"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold shrink-0"
             >
               ✕
             </button>

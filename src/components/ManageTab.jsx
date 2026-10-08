@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 import {
   Users,
   UserPlus,
@@ -73,6 +75,17 @@ export default function ManageTab({
 
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
+
+  // Safe backdrop dismiss handlers - prevents accidental closing on text selection or right click
+  const {
+    backdropProps: studentBackdropProps,
+    modalContentProps: studentModalContentProps
+  } = useSafeBackdropDismiss(() => setIsStudentModalOpen(false), isStudentModalOpen);
+
+  const {
+    backdropProps: topicBackdropProps,
+    modalContentProps: topicModalContentProps
+  } = useSafeBackdropDismiss(() => setIsTopicModalOpen(false), isTopicModalOpen);
 
   // Student Modal Openers
   const openCreateStudent = () => {
@@ -237,23 +250,23 @@ export default function ManageTab({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Top Banner with Section Tabs */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/15 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="glass-panel p-4 sm:p-7 rounded-2xl sm:rounded-3xl border border-white/15 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-white/10 text-white border border-white/20">
-              <Users className="w-6 h-6" />
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-white/10 text-white border border-white/20 shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Manage Students & Categories</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Manage Students & Categories</h2>
               <p className="text-xs text-rose-200/70">Add, edit, or delete candidates and scoring categories in <code className="text-rose-300 font-mono">score.db</code>.</p>
             </div>
           </div>
         </div>
 
         {/* Section Switcher & Action Buttons - Emil Kowalski style interactive pill tabs */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="relative flex items-center p-1 rounded-2xl bg-[#140003]/90 border border-white/15 backdrop-blur-md">
             <button
               onClick={() => { setActiveSection('students'); playSoundEffect('click'); }}
@@ -507,280 +520,294 @@ export default function ManageTab({
         </div>
       )}
 
-      {/* STUDENT CREATE / EDIT MODAL */}
-      <AnimatePresence>
-        {isStudentModalOpen && (
-          <div
-            onClick={() => setIsStudentModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#240106]/85 backdrop-blur-md"
-          >
-            <motion.div
-              onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="crimson-panel-container w-full max-w-md p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl relative"
+      {/* STUDENT CREATE / EDIT MODAL - Rendered via Portal at document.body with safe dismiss */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isStudentModalOpen && (
+            <div
+              {...studentBackdropProps}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-white/10 text-white border border-white/20">
-                    <UserPlus className="w-5 h-5" />
+              <motion.div
+                {...studentModalContentProps}
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                className="crimson-panel-container w-full max-w-md max-h-[92vh] overflow-y-auto p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/20 shadow-2xl relative my-auto"
+              >
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-white/10 text-white border border-white/20 shrink-0">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        {editingStudent ? 'Edit Student Profile' : 'Register New Student'}
+                      </h3>
+                      <p className="text-xs text-rose-200/70">Syncs directly to score.db</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      {editingStudent ? 'Edit Student Profile' : 'Register New Student'}
-                    </h3>
-                    <p className="text-xs text-rose-200/70">Syncs directly to score.db</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsStudentModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {notification && (
-                <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
-                  {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  <span>{notification.text}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleStudentSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                    Student Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. John Doe, Priya Sharma"
-                    value={studentForm.name}
-                    onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none placeholder-rose-200/40"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                    Roll / Candidate ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. STU-2026-042"
-                    value={studentForm.roll_no}
-                    onChange={(e) => setStudentForm({ ...studentForm, roll_no: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white font-mono text-xs outline-none placeholder-rose-200/40"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                      Batch / Class
-                    </label>
-                    <input
-                      type="text"
-                      value={studentForm.batch}
-                      onChange={(e) => setStudentForm({ ...studentForm, batch: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={studentForm.email}
-                      onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none placeholder-rose-200/40"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                    Avatar Theme Color
-                  </label>
-                  <div className="flex items-center gap-2.5">
-                    {PRESET_STUDENT_COLORS.map((c) => (
-                      <button
-                        type="button"
-                        key={c}
-                        onClick={() => setStudentForm({ ...studentForm, avatar_color: c })}
-                        style={{ backgroundColor: c }}
-                        className={`w-7 h-7 rounded-full border-2 transition-all ${studentForm.avatar_color === c ? 'scale-125 border-white shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => setIsStudentModalOpen(false)}
-                    className="btn-tactile px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-rose-100 text-xs font-semibold cursor-pointer border border-white/10"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-pill btn-tactile px-6 py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-rose-50 shadow-md cursor-pointer disabled:opacity-50 border border-white/30"
-                  >
-                    {loading ? 'Saving...' : editingStudent ? 'Update Profile' : 'Save Student'}
+                    ✕
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
-      {/* TOPIC CREATE / EDIT MODAL */}
-      <AnimatePresence>
-        {isTopicModalOpen && (
-          <div
-            onClick={() => setIsTopicModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#240106]/85 backdrop-blur-md"
-          >
-            <motion.div
-              onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="crimson-panel-container w-full max-w-lg p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl relative"
-            >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-white/10 text-white border border-white/20">
-                    <Sparkles className="w-5 h-5" />
+                {notification && (
+                  <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
+                    {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{notification.text}</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      {editingTopic ? 'Edit Scoring Category' : 'Create New Category'}
-                    </h3>
-                    <p className="text-xs text-rose-200/70">Configure parameters for dynamic evaluation</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsTopicModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
+                )}
 
-              {notification && (
-                <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
-                  {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  <span>{notification.text}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleTopicSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                    Category Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. CV, Confidence, Communication, Knowledge, Problem Solving..."
-                    value={topicForm.name}
-                    onChange={(e) => setTopicForm({ ...topicForm, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none placeholder-rose-200/40"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                    Evaluation Criteria / Notes
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="What competencies or skills are evaluated under this pillar..."
-                    value={topicForm.description}
-                    onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none resize-none placeholder-rose-200/40"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleStudentSubmit} className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                      Max Marks (Out of)
+                      Student Full Name *
                     </label>
                     <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={topicForm.max_score}
-                      onChange={(e) => setTopicForm({ ...topicForm, max_score: Number(e.target.value) })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none"
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. John Doe, Priya Sharma"
+                      value={studentForm.name}
+                      onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none placeholder-rose-200/40"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
-                      Weight Multiplier
+                      Roll / Candidate ID *
                     </label>
                     <input
-                      type="number"
-                      step="0.1"
-                      min="0.1"
-                      max="5.0"
-                      value={topicForm.weightage}
-                      onChange={(e) => setTopicForm({ ...topicForm, weightage: Number(e.target.value) })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-xs outline-none"
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. STU-2026-042"
+                      value={studentForm.roll_no}
+                      onChange={(e) => setStudentForm({ ...studentForm, roll_no: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white font-mono text-sm outline-none placeholder-rose-200/40"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Palette className="w-3.5 h-3.5 text-rose-300" /> Color Accent
-                  </label>
-                  <div className="flex items-center gap-2.5">
-                    {PRESET_TOPIC_COLORS.map((c) => (
-                      <button
-                        type="button"
-                        key={c}
-                        onClick={() => setTopicForm({ ...topicForm, color: c })}
-                        style={{ backgroundColor: c }}
-                        className={`w-7 h-7 rounded-full border-2 transition-all ${topicForm.color === c ? 'scale-125 border-white shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                        Batch / Class
+                      </label>
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        value={studentForm.batch}
+                        onChange={(e) => setStudentForm({ ...studentForm, batch: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none"
                       />
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <div>
+                      <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        autoComplete="off"
+                        placeholder="email@example.com"
+                        value={studentForm.email}
+                        onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none placeholder-rose-200/40"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                      Avatar Theme Color
+                    </label>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {PRESET_STUDENT_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setStudentForm({ ...studentForm, avatar_color: c })}
+                          style={{ backgroundColor: c }}
+                          className={`w-7 h-7 rounded-full border-2 transition-all ${studentForm.avatar_color === c ? 'scale-125 border-white shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setIsStudentModalOpen(false)}
+                      className="btn-tactile px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-rose-100 text-xs font-semibold cursor-pointer border border-white/10"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-pill btn-tactile px-6 py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-rose-50 shadow-md cursor-pointer disabled:opacity-50 border border-white/30"
+                    >
+                      {loading ? 'Saving...' : editingStudent ? 'Update Profile' : 'Save Student'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* TOPIC CREATE / EDIT MODAL - Rendered via Portal at document.body with safe dismiss */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isTopicModalOpen && (
+            <div
+              {...topicBackdropProps}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            >
+              <motion.div
+                {...topicModalContentProps}
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                className="crimson-panel-container w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/20 shadow-2xl relative my-auto"
+              >
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-white/10 text-white border border-white/20 shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        {editingTopic ? 'Edit Scoring Category' : 'Create New Category'}
+                      </h3>
+                      <p className="text-xs text-rose-200/70">Configure parameters for dynamic evaluation</p>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setIsTopicModalOpen(false)}
-                    className="btn-tactile px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-rose-100 text-xs font-semibold cursor-pointer border border-white/10"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-pill btn-tactile px-6 py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-rose-50 shadow-md cursor-pointer disabled:opacity-50 border border-white/30"
-                  >
-                    {loading ? 'Saving...' : editingTopic ? 'Update Category' : 'Save Category'}
+                    ✕
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                {notification && (
+                  <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
+                    {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{notification.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleTopicSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                      Category Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. CV, Confidence, Communication, Knowledge, Problem Solving..."
+                      value={topicForm.name}
+                      onChange={(e) => setTopicForm({ ...topicForm, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none placeholder-rose-200/40"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                      Evaluation Criteria / Notes
+                    </label>
+                    <textarea
+                      rows={2}
+                      autoComplete="off"
+                      placeholder="What competencies or skills are evaluated under this pillar..."
+                      value={topicForm.description}
+                      onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none resize-none placeholder-rose-200/40"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                        Max Marks (Out of)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={topicForm.max_score}
+                        onChange={(e) => setTopicForm({ ...topicForm, max_score: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2">
+                        Weight Multiplier
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        max="5.0"
+                        value={topicForm.weightage}
+                        onChange={(e) => setTopicForm({ ...topicForm, weightage: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#180104]/85 border border-white/20 focus:border-white text-white text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-rose-300" /> Color Accent
+                    </label>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {PRESET_TOPIC_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setTopicForm({ ...topicForm, color: c })}
+                          style={{ backgroundColor: c }}
+                          className={`w-7 h-7 rounded-full border-2 transition-all ${topicForm.color === c ? 'scale-125 border-white shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setIsTopicModalOpen(false)}
+                      className="btn-tactile px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-rose-100 text-xs font-semibold cursor-pointer border border-white/10"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-pill btn-tactile px-6 py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-rose-50 shadow-md cursor-pointer disabled:opacity-50 border border-white/30"
+                    >
+                      {loading ? 'Saving...' : editingTopic ? 'Update Category' : 'Save Category'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

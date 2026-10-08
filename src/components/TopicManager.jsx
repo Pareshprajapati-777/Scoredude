@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 import {
   Plus,
   Trash2,
@@ -39,6 +41,11 @@ export default function TopicManager({ topics, onRefreshTopics }) {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const {
+    backdropProps,
+    modalContentProps
+  } = useSafeBackdropDismiss(() => setIsModalOpen(false), isModalOpen);
 
   const openCreateModal = () => {
     setEditingTopic(null);
@@ -201,141 +208,151 @@ export default function TopicManager({ topics, onRefreshTopics }) {
         ))}
       </div>
 
-      {/* Modal for Add / Edit Topic */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="glass-panel w-full max-w-lg p-6 sm:p-8 rounded-3xl relative overflow-hidden border border-white/20 shadow-2xl"
+      {/* Modal for Add / Edit Topic rendered via Portal */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div
+              {...backdropProps}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                    <Sparkles className="w-5 h-5" />
+              <motion.div
+                {...modalContentProps}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="glass-panel w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 sm:p-8 rounded-2xl sm:rounded-3xl relative border border-white/20 shadow-2xl my-auto"
+              >
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">
+                        {editingTopic ? 'Edit Topic' : 'Create New Topic'}
+                      </h3>
+                      <p className="text-xs text-slate-400">Configure parameters for dynamic evaluation</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">
-                      {editingTopic ? 'Edit Topic' : 'Create New Topic'}
-                    </h3>
-                    <p className="text-xs text-slate-400">Configure parameters for dynamic evaluation</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {message && (
-                <div className={`p-4 rounded-xl mb-5 flex items-center gap-3 text-sm ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
-                  {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                  <span>{message.text}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Topic Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. CV, Confidence, Communication, Knowledge, Coding..."
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Description / Evaluation Criteria
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Describe what specific skills or parameters are assessed..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-slate-500 text-sm outline-none transition-all resize-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      Max Score (Out of)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={formData.max_score}
-                      onChange={(e) => setFormData({ ...formData, max_score: Number(e.target.value) })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white text-sm outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      Weight Multiplier
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0.1"
-                      max="5.0"
-                      value={formData.weightage}
-                      onChange={(e) => setFormData({ ...formData, weightage: Number(e.target.value) })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white text-sm outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Color Theme Selector */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-slate-400" /> Color Accent
-                  </label>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {PRESET_COLORS.map((c) => (
-                      <button
-                        type="button"
-                        key={c}
-                        onClick={() => setFormData({ ...formData, color: c })}
-                        style={{ backgroundColor: c }}
-                        className={`w-8 h-8 rounded-full border-2 transition-transform ${formData.color === c ? 'scale-125 border-white shadow-lg' : 'border-transparent opacity-80 hover:opacity-100 hover:scale-110'}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/30 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {loading ? 'Saving...' : editingTopic ? 'Update Topic' : 'Create Topic'}
+                    ✕
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                {message && (
+                  <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
+                    {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{message.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                      Topic Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. CV, Confidence, Communication, Knowledge, Coding..."
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white placeholder-slate-500 text-sm outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                      Description / Evaluation Criteria
+                    </label>
+                    <textarea
+                      rows={2}
+                      autoComplete="off"
+                      placeholder="Describe what specific skills or parameters are assessed..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white placeholder-slate-500 text-sm outline-none transition-all resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Max Score (Out of)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={formData.max_score}
+                        onChange={(e) => setFormData({ ...formData, max_score: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white text-sm outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Weight Multiplier
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        max="5.0"
+                        value={formData.weightage}
+                        onChange={(e) => setFormData({ ...formData, weightage: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-indigo-500 text-white text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Color Theme Selector */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Palette className="w-4 h-4 text-slate-400" /> Color Accent
+                    </label>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {PRESET_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setFormData({ ...formData, color: c })}
+                          style={{ backgroundColor: c }}
+                          className={`w-8 h-8 rounded-full border-2 transition-transform ${formData.color === c ? 'scale-125 border-white shadow-lg' : 'border-transparent opacity-80 hover:opacity-100 hover:scale-110'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/30 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? 'Saving...' : editingTopic ? 'Update Topic' : 'Create Topic'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

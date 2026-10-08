@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 import {
   FileText,
   Printer,
@@ -20,21 +22,28 @@ export default function ScorecardModal({ evaluation, onClose }) {
 
   const gradeInfo = getGradeBadgeInfo(evaluation.percentage);
 
+  const {
+    backdropProps,
+    modalContentProps
+  } = useSafeBackdropDismiss(onClose, !!evaluation);
+
   const handlePrint = () => {
     window.print();
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#240106]/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+      {...backdropProps}
+      className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
     >
       <motion.div
-        onClick={(e) => e.stopPropagation()}
+        {...modalContentProps}
         initial={{ scale: 0.92, opacity: 0, y: 25 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.92, opacity: 0, y: 25 }}
-        className="crimson-panel-container w-full max-w-3xl p-6 sm:p-10 rounded-3xl relative overflow-hidden border border-white/20 shadow-2xl my-8 print:bg-white print:text-black print:border-none print:shadow-none print:p-4 text-white"
+        className="crimson-panel-container w-full max-w-3xl max-h-[92vh] overflow-y-auto p-4 sm:p-8 rounded-2xl sm:rounded-3xl relative border border-white/20 shadow-2xl my-auto print:bg-white print:text-black print:border-none print:shadow-none print:p-4 text-white"
       >
         {/* Ambient Top Glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-red-500/15 rounded-full blur-3xl pointer-events-none print:hidden" />
@@ -70,29 +79,29 @@ export default function ScorecardModal({ evaluation, onClose }) {
         </div>
 
         {/* Printable Scorecard Layout */}
-        <div className="py-6 space-y-8 relative z-10">
+        <div className="py-4 sm:py-6 space-y-6 sm:space-y-8 relative z-10">
           {/* Institution Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-5 sm:pb-6 gap-4">
+            <div className="flex items-center gap-3.5 sm:gap-4">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl text-white shadow-xl relative"
+                className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl text-white shadow-xl relative shrink-0"
                 style={{ backgroundColor: evaluation.avatar_color || '#6366f1' }}
               >
                 {evaluation.student_name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-2xl font-black text-white">{evaluation.student_name}</h1>
-                <p className="text-sm font-mono text-rose-300 font-semibold">{evaluation.roll_no}</p>
+                <h1 className="text-xl sm:text-2xl font-black text-white">{evaluation.student_name}</h1>
+                <p className="text-xs sm:text-sm font-mono text-rose-300 font-semibold">{evaluation.roll_no}</p>
                 <p className="text-xs text-rose-200/70">{evaluation.batch || 'Batch 2026'}</p>
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <div className="inline-block">
-                <div className={`px-5 py-2 rounded-2xl font-black text-2xl border ${gradeInfo.bg} ${gradeInfo.glow}`}>
+                <div className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-lg sm:text-2xl border ${gradeInfo.bg} ${gradeInfo.glow}`}>
                   Grade: {evaluation.grade}
                 </div>
-                <div className="text-xs font-semibold text-rose-200/70 mt-1.5">{evaluation.status}</div>
+                <div className="text-xs font-semibold text-rose-200/70 mt-1">{evaluation.status}</div>
               </div>
             </div>
           </div>
@@ -206,6 +215,7 @@ export default function ScorecardModal({ evaluation, onClose }) {
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }

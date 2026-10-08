@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSafeBackdropDismiss from '../hooks/useSafeBackdropDismiss';
 import {
   Users,
   UserPlus,
@@ -30,6 +32,11 @@ export default function StudentManager({ students, onRefreshStudents, onSelectFo
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const {
+    backdropProps,
+    modalContentProps
+  } = useSafeBackdropDismiss(() => setIsModalOpen(false), isModalOpen);
 
   const openCreateModal = () => {
     setEditingStudent(null);
@@ -234,138 +241,150 @@ export default function StudentManager({ students, onRefreshStudents, onSelectFo
         ))}
       </div>
 
-      {/* Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-3xl relative overflow-hidden border border-white/20 shadow-2xl"
+      {/* Modal rendered via Portal with safe dismiss */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div
+              {...backdropProps}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                    <UserPlus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">
-                      {editingStudent ? 'Edit Student Profile' : 'Register Student'}
-                    </h3>
-                    <p className="text-xs text-slate-400">Save to score.db database</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {message && (
-                <div className={`p-4 rounded-xl mb-5 flex items-center gap-3 text-sm ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
-                  {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                  <span>{message.text}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. John Doe, Aditi Sharma"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-white placeholder-slate-500 text-sm outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Roll / Candidate ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. STU-2026-042"
-                    value={formData.roll_no}
-                    onChange={(e) => setFormData({ ...formData, roll_no: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white font-mono text-sm outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      Batch / Class
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.batch}
-                      onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white text-sm outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="student@edu.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white text-sm outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Avatar Color Picker */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Profile Badge Color
-                  </label>
+              <motion.div
+                {...modalContentProps}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="glass-panel w-full max-w-md max-h-[92vh] overflow-y-auto p-5 sm:p-8 rounded-2xl sm:rounded-3xl relative border border-white/20 shadow-2xl my-auto"
+              >
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
                   <div className="flex items-center gap-3">
-                    {AVATAR_COLORS.map((c) => (
-                      <button
-                        type="button"
-                        key={c}
-                        onClick={() => setFormData({ ...formData, avatar_color: c })}
-                        style={{ backgroundColor: c }}
-                        className={`w-7 h-7 rounded-full border-2 transition-all ${formData.avatar_color === c ? 'scale-125 border-white shadow-lg' : 'border-transparent opacity-75 hover:opacity-100'}`}
-                      />
-                    ))}
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">
+                        {editingStudent ? 'Edit Student Profile' : 'Register Student'}
+                      </h3>
+                      <p className="text-xs text-slate-400">Save to score.db database</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-cyan-500/30 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {loading ? 'Saving...' : editingStudent ? 'Update Profile' : 'Save Student'}
+                    ✕
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                {message && (
+                  <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-xs ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>
+                    {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{message.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. John Doe, Aditi Sharma"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white placeholder-slate-500 text-sm outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                      Roll / Candidate ID *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="e.g. STU-2026-042"
+                      value={formData.roll_no}
+                      onChange={(e) => setFormData({ ...formData, roll_no: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white font-mono text-sm outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Batch / Class
+                      </label>
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        value={formData.batch}
+                        onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white text-sm outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        autoComplete="off"
+                        placeholder="student@edu.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 focus:border-cyan-500 text-white text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Avatar Color Picker */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                      Profile Badge Color
+                    </label>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {AVATAR_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setFormData({ ...formData, avatar_color: c })}
+                          style={{ backgroundColor: c }}
+                          className={`w-7 h-7 rounded-full border-2 transition-all ${formData.avatar_color === c ? 'scale-125 border-white shadow-lg' : 'border-transparent opacity-75 hover:opacity-100'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-cyan-500/30 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? 'Saving...' : editingStudent ? 'Update Profile' : 'Save Student'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

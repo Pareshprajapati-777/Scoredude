@@ -9,6 +9,7 @@ import ManageTab from './components/ManageTab';
 import HistoryTab from './components/HistoryTab';
 import ScorecardModal from './components/ScorecardModal';
 import { playSoundEffect } from './utils/sound';
+import useSafeBackdropDismiss from './hooks/useSafeBackdropDismiss';
 
 export default function App() {
   const [activeModal, setActiveModal] = useState(null); // 'dashboard' | 'scoring' | 'manage' | 'history' | null
@@ -18,6 +19,16 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [selectedStudentForEval, setSelectedStudentForEval] = useState(null);
   const [viewingScorecardModal, setViewingScorecardModal] = useState(null);
+
+  const {
+    backdropProps: manageBackdropProps,
+    modalContentProps: manageContentProps
+  } = useSafeBackdropDismiss(() => setActiveModal(null), activeModal === 'manage');
+
+  const {
+    backdropProps: historyBackdropProps,
+    modalContentProps: historyContentProps
+  } = useSafeBackdropDismiss(() => setActiveModal(null), activeModal === 'history');
 
   const fetchAllData = async () => {
     try {
@@ -60,7 +71,7 @@ export default function App() {
   };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-black text-white selection:bg-white selection:text-black">
+    <main className="relative w-full h-[100dvh] min-h-screen overflow-hidden bg-black text-white selection:bg-white selection:text-black">
       {/* Dynamic Scrubbing Video */}
       <BackgroundVideo />
 
@@ -111,25 +122,26 @@ export default function App() {
       {/* Wrapping ManageTab inside a sleek left glass panel matching the photo theme */}
       {activeModal === 'manage' && (
         <div
-          onClick={() => setActiveModal(null)}
-          className="fixed inset-0 z-30 flex justify-start pt-20 pb-4 px-3 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
+          {...manageBackdropProps}
+          className="fixed inset-0 z-30 flex justify-start pt-16 sm:pt-20 pb-2 sm:pb-4 px-2 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
         >
           {/* Soft left crimson gradient backdrop so puppet character remains completely visible on the right */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#320107]/90 via-[#45020c]/50 to-transparent pointer-events-none" />
 
           <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-3xl p-5 sm:p-7 shadow-2xl text-white overflow-y-auto"
+            {...manageContentProps}
+            className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl text-white overflow-y-auto"
           >
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/15">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 mb-3 sm:mb-4 border-b border-white/15">
               <div className="flex items-center gap-2">
                 <span className="text-xl">👥</span>
-                <h2 className="text-xl font-bold tracking-tight text-white">Scoredude Directory & Categories</h2>
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">Scoredude Directory & Categories</h2>
               </div>
               <button
+                type="button"
                 onClick={() => setActiveModal(null)}
                 title="Close to home"
-                className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10"
+                className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10 shrink-0"
               >
                 ✕
               </button>
@@ -150,25 +162,26 @@ export default function App() {
       {/* Wrapping HistoryTab inside left glass panel matching the photo theme */}
       {activeModal === 'history' && (
         <div
-          onClick={() => setActiveModal(null)}
-          className="fixed inset-0 z-30 flex justify-start pt-20 pb-4 px-3 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
+          {...historyBackdropProps}
+          className="fixed inset-0 z-30 flex justify-start pt-16 sm:pt-20 pb-2 sm:pb-4 px-2 sm:px-6 lg:px-8 overflow-hidden animate-fadeIn"
         >
           {/* Soft left crimson gradient backdrop so puppet character remains completely visible on the right */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#320107]/90 via-[#45020c]/50 to-transparent pointer-events-none" />
 
           <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-3xl p-5 sm:p-7 shadow-2xl text-white overflow-y-auto"
+            {...historyContentProps}
+            className="relative z-10 w-full lg:w-[62%] xl:w-[58%] h-full crimson-panel-container rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl text-white overflow-y-auto"
           >
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/15">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 mb-3 sm:mb-4 border-b border-white/15">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📜</span>
-                <h2 className="text-xl font-bold tracking-tight text-white">Scoredude Evaluation History</h2>
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">Scoredude Evaluation History</h2>
               </div>
               <button
+                type="button"
                 onClick={() => setActiveModal(null)}
                 title="Close to home"
-                className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10"
+                className="btn-tactile w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-rose-100 hover:text-white transition-colors cursor-pointer text-sm font-bold border border-white/10 shrink-0"
               >
                 ✕
               </button>

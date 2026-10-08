@@ -91,67 +91,89 @@ export default function Navbar({ activeModal, onOpenModal, evaluationsCount }) {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-          className="md:hidden flex flex-col justify-center items-center gap-[5px] w-8 h-8 z-30 cursor-pointer focus:outline-none"
+          className="md:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 p-1 z-50 cursor-pointer focus:outline-none rounded-lg bg-white/10"
         >
           <span
-            className={`w-6 h-[2px] bg-white transition-all duration-300 transform ${
+            className={`w-5 h-[2px] bg-white transition-all duration-300 transform ${
               mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''
             }`}
           />
           <span
-            className={`w-6 h-[2px] bg-white transition-all duration-300 ${
+            className={`w-5 h-[2px] bg-white transition-all duration-300 ${
               mobileMenuOpen ? 'opacity-0' : 'opacity-100'
             }`}
           />
           <span
-            className={`w-6 h-[2px] bg-white transition-all duration-300 transform ${
+            className={`w-5 h-[2px] bg-white transition-all duration-300 transform ${
               mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''
             }`}
           />
         </button>
       </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu overlay - elevated to z-40 */}
       <div
-        className={`fixed inset-0 z-20 bg-gradient-to-b from-[#4d020a]/98 via-[#350106]/98 to-[#1c0003]/98 backdrop-blur-2xl flex flex-col justify-center px-8 gap-6 transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-40 bg-gradient-to-b from-[#4d020a]/98 via-[#350106]/98 to-[#1c0003]/98 backdrop-blur-2xl flex flex-col justify-center px-6 sm:px-8 gap-5 sm:gap-6 transition-all duration-300 md:hidden ${
           mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <button
           onClick={() => handleNavClick('dashboard')}
-          className="text-left text-[28px] font-medium text-white hover:opacity-60 transition-opacity"
+          className={`text-left text-xl sm:text-[26px] font-medium transition-all flex items-center justify-between ${
+            activeModal === 'dashboard' ? 'text-white font-bold underline underline-offset-8' : 'text-rose-100/80 hover:text-white'
+          }`}
         >
-          1. Dashboard
+          <span>1. Dashboard & Stats</span>
+          <span className="text-sm opacity-60">→</span>
         </button>
         <button
           onClick={() => handleNavClick('scoring')}
-          className="text-left text-[28px] font-medium text-white hover:opacity-60 transition-opacity"
+          className={`text-left text-xl sm:text-[26px] font-medium transition-all flex items-center justify-between ${
+            activeModal === 'scoring' ? 'text-white font-bold underline underline-offset-8' : 'text-rose-100/80 hover:text-white'
+          }`}
         >
-          2. Score Candidate
+          <span className="flex items-center gap-2">
+            <span>2. Score Candidate</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-white text-black font-bold">Fast</span>
+          </span>
+          <span className="text-sm opacity-60">→</span>
         </button>
         <button
           onClick={() => handleNavClick('manage')}
-          className="text-left text-[28px] font-medium text-white hover:opacity-60 transition-opacity"
+          className={`text-left text-xl sm:text-[26px] font-medium transition-all flex items-center justify-between ${
+            activeModal === 'manage' ? 'text-white font-bold underline underline-offset-8' : 'text-rose-100/80 hover:text-white'
+          }`}
         >
-          3. Manage Students & Topics
+          <span>3. Manage Students & Topics</span>
+          <span className="text-sm opacity-60">→</span>
         </button>
         <button
           onClick={() => handleNavClick('history')}
-          className="text-left text-[28px] font-medium text-white hover:opacity-60 transition-opacity flex items-center justify-between"
+          className={`text-left text-xl sm:text-[26px] font-medium transition-all flex items-center justify-between ${
+            activeModal === 'history' ? 'text-white font-bold underline underline-offset-8' : 'text-rose-100/80 hover:text-white'
+          }`}
         >
           <span>4. View History</span>
-          {evaluationsCount > 0 && (
+          {evaluationsCount > 0 ? (
             <span className="px-2 py-0.5 rounded-full bg-white text-black text-xs font-bold">
               {evaluationsCount} records
             </span>
+          ) : (
+            <span className="text-sm opacity-60">→</span>
           )}
         </button>
-        <div className="pt-4 border-t border-white/20">
+        <div className="pt-4 border-t border-white/20 flex items-center justify-between">
           <button
             onClick={() => handleNavClick(null)}
-            className="text-sm text-rose-200/70 hover:text-white"
+            className="text-xs text-rose-200/70 hover:text-white py-2"
           >
             ← Close to Hero Video
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-xs text-rose-300 font-bold px-3 py-1.5 rounded-lg bg-white/10"
+          >
+            ✕ Close Menu
           </button>
         </div>
       </div>
