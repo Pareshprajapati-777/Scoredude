@@ -20,7 +20,7 @@ export default function HeroSection({ onOpenModal }) {
   }, []);
 
   return (
-    <section className="relative z-[1] w-full h-[100dvh] min-h-screen flex flex-col justify-end pb-16 sm:pb-12 md:justify-center md:pb-0 px-4 sm:px-8 md:px-10 overflow-hidden">
+    <section className="relative z-[1] w-full h-[100dvh] min-h-screen flex flex-col justify-end pb-16 sm:pb-12 md:justify-center md:pb-0 px-4 sm:px-8 md:px-10 overflow-hidden select-none">
       <div className="max-w-xl relative z-10">
         {/* 1. Blurred intro label */}
         <div

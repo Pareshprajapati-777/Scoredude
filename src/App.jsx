@@ -73,7 +73,7 @@ export default function App() {
   return (
     <main className="relative w-full h-[100dvh] min-h-screen overflow-hidden bg-black text-white selection:bg-white selection:text-black">
       {/* Dynamic Scrubbing Video */}
-      <BackgroundVideo />
+      <BackgroundVideo isInteractive={!activeModal} />
 
       {/* Main NavBar integration */}
       <Navbar
